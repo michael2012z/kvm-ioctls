@@ -1146,11 +1146,17 @@ mod tests {
         let kvm = Kvm::new().unwrap();
         assert!(kvm.check_extension(Cap::Irqchip));
         let vm = kvm.create_vm().unwrap();
-        if cfg!(any(target_arch = "x86", target_arch = "x86_64")) {
-            assert!(vm.create_irq_chip().is_ok());
-        } else if cfg!(any(target_arch = "arm", target_arch = "aarch64")) {
-            // On arm, we expect this to fail as the irq chip needs to be created after the vcpus.
-            assert!(vm.create_irq_chip().is_err());
+        #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+        assert!(vm.create_irq_chip().is_ok());
+        #[cfg(any(target_arch = "arm", target_arch = "aarch64"))]
+        {
+            // With GICv2, this should succeed.
+            // But with GICv3, we expect this to fail as the irq chip needs
+            // to be created after the vcpus.
+            if vm.create_irq_chip().is_err() {
+                assert!(vm.create_vcpu(0).is_ok());
+                assert!(vm.create_irq_chip().is_ok());
+            }
         }
 
         #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
