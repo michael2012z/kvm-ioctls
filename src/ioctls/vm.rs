@@ -1196,8 +1196,21 @@ mod tests {
 
         let kvm = Kvm::new().unwrap();
         assert!(kvm.check_extension(Cap::Irqchip));
+
         let vm = kvm.create_vm().unwrap();
-        assert!(vm.create_irq_chip().is_ok());
+
+        let mut gic_device = kvm_bindings::kvm_create_device {
+            type_: kvm_device_type_KVM_DEV_TYPE_ARM_VGIC_V2,
+            fd: 0,
+            flags: KVM_CREATE_DEVICE_TEST,
+        };
+
+        if vm.create_device(&mut gic_device).is_ok() {
+            assert!(vm.create_irq_chip().is_ok());
+        } else {
+            println!("Emulating VGIC v2 is not supported.");
+            assert!(vm.create_irq_chip().is_ok());
+        }
     }
 
     #[test]
