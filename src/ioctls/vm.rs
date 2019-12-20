@@ -1190,6 +1190,17 @@ mod tests {
     }
 
     #[test]
+    #[cfg(target_arch = "aarch64")]
+    fn test_irq_chip() {
+        use Cap;
+
+        let kvm = Kvm::new().unwrap();
+        assert!(kvm.check_extension(Cap::Irqchip));
+        let vm = kvm.create_vm().unwrap();
+        assert!(vm.create_irq_chip().is_ok());
+    }
+
+    #[test]
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn test_pit2() {
         let kvm = Kvm::new().unwrap();
