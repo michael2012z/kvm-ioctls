@@ -152,6 +152,16 @@ impl VmFd {
     ///
     /// #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     /// vm.create_irq_chip().unwrap();
+    /// #[cfg(any(target_arch = "arm", target_arch = "aarch64"))] {
+    ///     let mut gic_device = kvm_bindings::kvm_create_device {
+    ///         type_: kvm_device_type_KVM_DEV_TYPE_ARM_VGIC_V2,
+    ///         fd: 0,
+    ///         flags: KVM_CREATE_DEVICE_TEST,
+    ///     };
+    ///     if vm.create_device(&mut gic_device).is_ok() {
+    ///         vm.create_irq_chip().unwrap();
+    ///     }
+    /// }
     /// ```
     ///
     #[cfg(any(
@@ -1190,7 +1200,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(target_arch = "aarch64")]
+    #[cfg(any(target_arch = "arm", target_arch = "aarch64"))]
     fn test_irq_chip() {
         use Cap;
 
@@ -1199,18 +1209,17 @@ mod tests {
 
         let vm = kvm.create_vm().unwrap();
 
+        // On ARM/arm64, a GICv2 is created. It's better to check ahead whether GICv2
+        // can be emulated or not.
+
         let mut gic_device = kvm_bindings::kvm_create_device {
             type_: kvm_device_type_KVM_DEV_TYPE_ARM_VGIC_V2,
             fd: 0,
             flags: KVM_CREATE_DEVICE_TEST,
         };
 
-        if vm.create_device(&mut gic_device).is_ok() {
-            assert!(vm.create_irq_chip().is_ok());
-        } else {
-            println!("Emulating VGIC v2 is not supported.");
-            assert!(vm.create_irq_chip().is_ok());
-        }
+        let vGIC_v2_supported = vm.create_device(&mut gic_device).is_ok();
+        assert_eq!(vm.create_irq_chip().is_ok(), vGIC_v2_supported);
     }
 
     #[test]
