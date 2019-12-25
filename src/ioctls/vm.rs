@@ -146,6 +146,7 @@ impl VmFd {
     ///
     /// ```rust
     /// # extern crate kvm_ioctls;
+    /// # extern crate kvm_bindings; 
     /// # use kvm_ioctls::Kvm;
     /// let kvm = Kvm::new().unwrap();
     /// let vm = kvm.create_vm().unwrap();
@@ -153,6 +154,8 @@ impl VmFd {
     /// #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     /// vm.create_irq_chip().unwrap();
     /// #[cfg(any(target_arch = "arm", target_arch = "aarch64"))] {
+    ///     use kvm_bindings::{kvm_create_device,
+    ///         kvm_device_type_KVM_DEV_TYPE_ARM_VGIC_V2, KVM_CREATE_DEVICE_TEST};
     ///     let mut gic_device = kvm_bindings::kvm_create_device {
     ///         type_: kvm_device_type_KVM_DEV_TYPE_ARM_VGIC_V2,
     ///         fd: 0,
@@ -1218,8 +1221,8 @@ mod tests {
             flags: KVM_CREATE_DEVICE_TEST,
         };
 
-        let vGIC_v2_supported = vm.create_device(&mut gic_device).is_ok();
-        assert_eq!(vm.create_irq_chip().is_ok(), vGIC_v2_supported);
+        let vgic_v2_supported = vm.create_device(&mut gic_device).is_ok();
+        assert_eq!(vm.create_irq_chip().is_ok(), vgic_v2_supported);
     }
 
     #[test]
