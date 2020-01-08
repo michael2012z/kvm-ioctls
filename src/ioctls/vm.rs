@@ -1046,6 +1046,7 @@ impl VmFd {
     /// # use kvm_ioctls::Kvm;
     /// use kvm_bindings::{
     ///     kvm_device_type_KVM_DEV_TYPE_VFIO,
+    ///     kvm_device_type_KVM_DEV_TYPE_ARM_VGIC_V2,
     ///     kvm_device_type_KVM_DEV_TYPE_ARM_VGIC_V3,
     ///     KVM_CREATE_DEVICE_TEST,
     /// };
@@ -1063,8 +1064,21 @@ impl VmFd {
     ///     fd: 0,
     ///     flags: KVM_CREATE_DEVICE_TEST,
     /// };
-    /// let device_fd = vm
-    ///     .create_device(&mut device).unwrap();
+    /// // On ARM, creating VGICv3 may fail due to hardware dependency.
+    /// // Retry to create VGICv2 in that case.
+    /// let device_fd = match vm.create_device(&mut device) {
+    ///     Ok(fd) => fd,
+    ///     Err(_) => {
+    ///         #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    ///         panic!("Cannot create VFIO device.");
+    ///         #[cfg(any(target_arch = "arm", target_arch = "aarch64"))]
+    ///         {
+    ///             device.type_ = kvm_device_type_KVM_DEV_TYPE_ARM_VGIC_V2;
+    ///             vm.create_device(&mut device)
+    ///                 .expect("Cannot create KVM vGIC device")
+    ///         }
+    ///     }
+    /// };
     /// ```
     ///
     pub fn create_device(&self, device: &mut kvm_create_device) -> Result<DeviceFd> {
