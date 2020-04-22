@@ -231,6 +231,16 @@ impl Kvm {
         }
     }
 
+    /// Gets VM IPA size.
+    pub fn get_vm_ipa_size(&self) -> usize {
+        let x = self.check_extension_int(Cap::ArmVmIpaSize);
+        if x > 0 {
+            x as usize
+        } else {
+            0
+        }
+    }
+
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     fn get_cpuid(&self, kind: u64, max_entries_count: usize) -> Result<CpuId> {
         let mut cpuid = CpuId::new(max_entries_count);
@@ -425,6 +435,7 @@ mod tests {
         // Memory related getters
         assert!(kvm.get_vcpu_mmap_size().unwrap() > 0);
         assert!(kvm.get_nr_memslots() >= 32);
+        assert!(kvm.get_vm_ipa_size() > 0);
     }
 
     #[test]
