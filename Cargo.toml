@@ -13,7 +13,7 @@ libc = ">=0.2.39"
 vmm-sys-util = ">=0.2.1"
 
 [dependencies.kvm-bindings]
-git = "https://github.com/cloud-hypervisor/kvm-bindings"
+git = "https://github.com/michael2012z/kvm-bindings"
 branch = "ch"
 features = ["fam-wrappers"]
 
